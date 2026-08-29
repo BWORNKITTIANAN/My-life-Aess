@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>เส้นทางของฉัน — My Life Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@400;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3F6FB;
+    --paper-dim:#E5ECF6;
+    --ink:#1C2733;
+    --ink-soft:#5A6B7E;
+    --moss:#1F4E79;
+    --moss-deep:#122E47;
+    --ochre:#D8483F;
+    --dusk:#3FAEDE;
+    --line:#D6E1EC;
+    --card:#FFFFFF;
+    --radius:16px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans Thai',sans-serif;
+    font-weight:400;
+    min-height:100vh;
+    padding-bottom:88px;
+    overflow-x:hidden;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+  h1,h2,h3,.serif{font-family:'Noto Serif Thai',serif;}
+  .wrap{max-width:560px;margin:0 auto;padding:22px 18px 8px;}
+
+  /* Header */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:18px;
+  }
+  .brand{display:flex; flex-direction:column;}
+  .brand .eyebrow{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft);}
+  .brand h1{font-size:20px; margin:2px 0 0; font-weight:700; color:var(--moss-deep);}
+  .datepill{
+    background:var(--card); border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; font-size:12px; color:var(--ink-soft);
+  }
+
+  /* Path hero (signature element) */
+  .path-hero{
+    background:linear-gradient(180deg, var(--moss-deep) 0%, var(--moss) 100%);
+    border-radius:22px; padding:20px 18px 16px; color:#F2EEE1; margin-bottom:18px;
+    position:relative; overflow:hidden;
+  }
+  .path-hero::after{
+    content:""; position:absolute; right:-30px; top:-30px; width:140px; height:140px;
+    border-radius:50%; background:radial-gradient(circle, rgba(246,242,234,0.12), transparent 70%);
+  }
+  .path-hero h2{font-size:15px; margin:0 0 3px; font-weight:600; opacity:.9;}
+  .path-hero .quote{font-size:13px; opacity:.78; margin:0 0 14px; line-height:1.5;}
+  .stones{display:flex; align-items:center; gap:0; position:relative; z-index:1;}
+  .stone{
+    flex:1; height:6px; background:rgba(246,242,234,0.22); border-radius:3px; margin-right:4px;
+    position:relative; overflow:hidden;
+  }
+  .stone:last-child{margin-right:0;}
+  .stone i{display:block; height:100%; width:0%; background:#FF7A66; border-radius:3px; transition:width .5s ease;}
+  .stones-label{display:flex; justify-content:space-between; font-size:10px; opacity:.7; margin-top:6px;}
+
+  /* Tabs */
+  .tabs{
+    position:fixed; bottom:0; left:0; right:0; background:var(--card);
+    border-top:1px solid var(--line); display:flex; padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+    z-index:50; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{
+    flex:0 0 62px; text-align:center; background:none; border:none; cursor:pointer;
+    padding:8px 1px 4px; font-family:'IBM Plex Sans Thai',sans-serif; font-size:9.5px; color:var(--ink-soft);
+    display:flex; flex-direction:column; align-items:center; gap:3px; border-radius:12px;
+  }
+  .tab .ico{font-size:16px; line-height:1;}
+  .tab.active{color:var(--moss-deep); background:var(--paper-dim); font-weight:600;}
+
+  .view{display:none; animation:fadein .25s ease;}
+  .view.active{display:block;}
+  @keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; margin-bottom:14px;
+  }
+  .card h3{font-size:14px; margin:0 0 12px; color:var(--moss-deep); font-weight:700; display:flex; align-items:center; gap:7px;}
+  .card h3 .tag{font-size:10px; font-weight:500; color:var(--ink-soft); background:var(--paper-dim); padding:2px 8px; border-radius:999px; margin-left:auto;}
+
+  /* Checklist items */
+  .item{
+    display:flex; align-items:center; gap:12px; padding:10px 4px; border-bottom:1px solid var(--line);
+  }
+  .item:last-child{border-bottom:none;}
+  .item .check{
+    width:26px; height:26px; border-radius:50%; border:2px solid var(--line); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; color:transparent;
+    transition:all .15s ease;
+  }
+  .item .check.done{background:var(--moss); border-color:var(--moss); color:#fff;}
+  .item .label{flex:1; font-size:14px;}
+  .item .label.done{color:var(--ink-soft); text-decoration:line-through;}
+  .item .sub{font-size:11px; color:var(--ink-soft); margin-top:1px;}
+
+  .encourage{
+    font-size:12.5px; color:var(--ink-soft); text-align:center; padding:10px 8px; font-style:normal;
+    border-top:1px dashed var(--line); margin-top:4px; padding-top:12px;
+  }
+
+  /* Buttons & inputs */
+  button{font-family:inherit;}
+  .btn{
+    background:var(--moss); color:#fff; border:none; border-radius:12px; padding:11px 16px;
+    font-size:13.5px; font-weight:600; cursor:pointer; width:100%;
+  }
+  .btn.secondary{background:var(--paper-dim); color:var(--ink); border:1px solid var(--line);}
+  .btn.small{width:auto; padding:8px 14px; font-size:12.5px;}
+  .btn.ghost{background:none; border:1px solid var(--line); color:var(--ink-soft);}
+  input,select,textarea{
+    width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px;
+    font-family:inherit; font-size:13.5px; background:var(--paper); color:var(--ink); margin-bottom:10px;
+  }
+  textarea{resize:vertical; min-height:70px;}
+  label.field-label{font-size:11.5px; color:var(--ink-soft); margin-bottom:4px; display:block; font-weight:500;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .stars{display:flex; gap:6px; margin-bottom:10px;}
+  .star{font-size:20px; cursor:pointer; color:var(--line);}
+  .star.on{color:var(--ochre);}
+
+  /* Stats grid (dashboard) */
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .stat-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px;}
+  .stat-card .ico{font-size:20px;}
+  .stat-card .num{font-family:'Noto Serif Thai',serif; font-size:22px; font-weight:700; color:var(--moss-deep); margin:4px 0 1px;}
+  .stat-card .lbl{font-size:11px; color:var(--ink-soft);}
+  .bigprogress{background:var(--paper-dim); border-radius:8px; height:10px; overflow:hidden; margin-top:8px;}
+  .bigprogress i{display:block; height:100%; background:var(--ochre); border-radius:8px; transition:width .4s;}
+
+  /* Calendar heatmap */
+  .heatmap{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
+  .hcell{aspect-ratio:1; border-radius:5px; background:var(--paper-dim); position:relative;}
+  .hcell.done{background:var(--moss);}
+  .hcell.min{background:#9AD4F0;}
+  .hcell .dn{position:absolute; bottom:2px; right:3px; font-size:7px; color:var(--ink-soft);}
+
+  /* Goal horizon */
+  .horizon{margin-bottom:16px;}
+  .horizon-head{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .horizon-head .h-title{font-family:'Noto Serif Thai',serif; font-weight:700; font-size:15px; color:var(--moss-deep);}
+  .horizon-head .h-sub{font-size:11px; color:var(--ink-soft); margin-left:auto;}
+  .goal-row{display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px solid var(--line);}
+  .goal-row:last-child{border-bottom:none;}
+  .goal-row .check{width:22px;height:22px;margin-top:1px;}
+
+  /* Journal entries */
+  .jentry{border-bottom:1px solid var(--line); padding:12px 0;}
+  .jentry:last-child{border-bottom:none;}
+  .jentry .jdate{font-size:11px; color:var(--ink-soft); margin-bottom:4px; font-weight:600;}
+  .jentry .jtext{font-size:13.5px; line-height:1.6; white-space:pre-wrap;}
+
+  .empty{text-align:center; padding:24px 10px; color:var(--ink-soft); font-size:13px;}
+  .toast{
+    position:fixed; bottom:96px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#F6F2EA; padding:9px 18px; border-radius:999px; font-size:12.5px;
+    opacity:0; transition:all .3s ease; z-index:100; pointer-events:none; white-space:nowrap;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  .segment{display:flex; background:var(--paper-dim); border-radius:10px; padding:3px; margin-bottom:12px;}
+  .segment button{flex:1; background:none; border:none; padding:8px; border-radius:8px; font-size:12px; color:var(--ink-soft); cursor:pointer;}
+  .segment button.on{background:var(--card); color:var(--moss-deep); font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,0.06);}
+
+  .list-log{max-height:220px; overflow-y:auto;}
+  .log-row{display:flex; justify-content:space-between; font-size:12.5px; padding:7px 0; border-bottom:1px solid var(--line);}
+  .log-row:last-child{border-bottom:none;}
+  .log-row .amt.in{color:var(--moss-deep);}
+  .log-row .amt.out{color:#C0392B;}
+
+  .icon-btn{
+    background:none; border:1px solid var(--line); border-radius:10px; width:36px; height:36px;
+    display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; color:var(--ink-soft);
+  }
+  .topbar-right{display:flex; align-items:center; gap:8px;}
+
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(35,40,31,0.5); z-index:200;
+    align-items:flex-end; justify-content:center;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal-sheet{
+    background:var(--paper); width:100%; max-width:560px; border-radius:20px 20px 0 0;
+    padding:20px 18px calc(20px + env(safe-area-inset-bottom)); max-height:88vh; overflow-y:auto;
+  }
+  .modal-sheet h2{font-size:17px; margin:0 0 14px; color:var(--moss-deep);}
+  .modal-close{float:right; background:none; border:none; font-size:20px; color:var(--ink-soft); cursor:pointer;}
+  .chk-row{display:flex; align-items:center; gap:8px; padding:6px 0;}
+  .chk-row input[type=checkbox]{width:auto; margin:0;}
+  .chk-row label{font-size:13px; margin:0;}
+  select{width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font-family:inherit; font-size:13.5px; background:var(--paper); color:var(--ink); margin-bottom:10px;}
+  .link-btn{
+    display:block; text-align:center; text-decoration:none; background:var(--paper-dim); color:var(--moss-deep);
+    border:1px solid var(--line); border-radius:12px; padding:10px; font-size:12.5px; font-weight:600; margin-bottom:10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <span class="eyebrow">My Life Tracker</span>
+      <h1>เส้นทางของฉัน</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="datepill" id="todayPill">—</div>
+      <button class="icon-btn" id="settingsBtn" title="ตั้งค่า">⚙️</button>
+    </div>
+  </div>
+
+  <div class="path-hero">
+    <h2>เดินไปทีละก้าว</h2>
+    <p class="quote" id="heroQuote">ไม่ต้องสมบูรณ์แบบ แค่เดินต่อ</p>
+    <div class="stones" id="stones"></div>
+    <div class="stones-label"><span>วันนี้</span><span id="streakLabel">ต่อเนื่อง 0 วัน</span></div>
+  </div>
+
+  <!-- TODAY -->
+  <div class="view active" id="view-today">
+    <div id="reminderSlot"></div>
+    <div class="card">
+      <h3>💼 งาน <span class="tag" id="workDate">—</span></h3>
+      <div id="workItems"></div>
+    </div>
+    <div class="card">
+      <h3>🇨🇳 พัฒนาตัวเอง</h3>
+      <div id="devItems"></div>
+    </div>
+    <div class="card">
+      <h3>🧘 สุขภาพ</h3>
+      <div id="healthItems"></div>
+    </div>
+    <div class="card">
+      <h3>❤️ ชีวิต</h3>
+      <div id="lifeItems"></div>
+      <div class="encourage" id="encourageMsg">ไม่เป็นไร พรุ่งนี้เริ่มใหม่ได้</div>
+    </div>
+  </div>
+
+  <!-- CHINESE -->
+  <div class="view" id="view-chinese">
+    <div class="card">
+      <h3>🇨🇳 เรียนจีน — จิ๋วฟู่เต๋า <span class="tag" id="cnStreak">0 วันต่อเนื่อง</span></h3>
+      <div class="row2">
+        <div><div class="num" style="font-family:'Noto Serif Thai',serif;font-size:20px;font-weight:700;color:var(--moss-deep)" id="cnTotalHours">0</div><div style="font-size:11px;color:var(--ink-soft)">ชั่วโมงสะสม</div></div>
+        <div><div class="num" style="font-family:'Noto Serif Thai',serif;font-size:20px;font-weight:700;color:var(--moss-deep)" id="cnDaysCount">0 / 365</div><div style="font-size:11px;color:var(--ink-soft)">วัน (เป้าหมาย 1 ปี)</div></div>
+      </div>
+      <div class="bigprogress"><i id="cnYearBar" style="width:0%"></i></div>
+      <div style="font-size:11px; color:var(--ink-soft); margin-top:10px;" id="cnLessonProgress">บทเรียน 0 / 48 (จิ๋วฟู่เต๋า)</div>
+      <div class="bigprogress"><i id="cnLessonBar" style="width:0%; background:var(--dusk);"></i></div>
+      <a class="link-btn" href="https://www.jiewfudao.com/" target="_blank" rel="noopener" style="margin-top:12px;">🔗 เปิดเว็บ jiewfudao.com</a>
+    </div>
+
+    <div class="card">
+      <h3>📅 บันทึกวันนี้</h3>
+      <label class="field-label">บทเรียน (ตามหลักสูตร jiewfudao)</label>
+      <select id="cnLessonSelect"></select>
+      <label class="field-label">หัวข้อ/รายละเอียดเพิ่มเติม (ถ้ามี)</label>
+      <input type="text" id="cnLesson" placeholder="เช่น สรรพนาม, คำศัพท์เพิ่มเติม">
+      <div class="row2">
+        <div>
+          <label class="field-label">เวลาเรียน (นาที)</label>
+          <input type="number" id="cnMinutes" placeholder="60">
+        </div>
+        <div>
+          <label class="field-label">คำศัพท์ใหม่ (จำนวน)</label>
+          <input type="number" id="cnVocab" placeholder="5">
+        </div>
+      </div>
+      <label class="field-label">ประโยคใหม่ที่ได้เรียน</label>
+      <textarea id="cnSentence" placeholder="เขียนประโยคที่ประทับใจวันนี้..."></textarea>
+      <label class="field-label">ระดับความเข้าใจวันนี้</label>
+      <div class="stars" id="cnStars">
+        <span class="star" data-v="1">★</span><span class="star" data-v="2">★</span><span class="star" data-v="3">★</span><span class="star" data-v="4">★</span><span class="star" data-v="5">★</span>
+      </div>
+      <label class="item" style="padding:0 0 10px;">
+        <span class="check" id="cnReviewCheck">✓</span>
+        <span class="label">วันนี้ได้ทบทวนบทเรียนเก่า</span>
+      </label>
+      <div class="row2">
+        <button class="btn secondary" id="cnMinBtn">เรียนขั้นต่ำ 10 นาที</button>
+        <button class="btn" id="cnSaveBtn">บันทึกวันนี้</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🗓 ปฏิทินการเรียน</h3>
+      <div class="heatmap" id="cnHeatmap"></div>
+      <div style="display:flex;gap:14px;font-size:10px;color:var(--ink-soft);margin-top:10px;">
+        <span>🟩 เรียนเต็ม</span><span>🟢 ขั้นต่ำ</span><span>⬜ ยังไม่เรียน</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📖 ประวัติการเรียน</h3>
+      <div class="list-log" id="cnLog"><div class="empty">ยังไม่มีบันทึก เริ่มบทเรียนแรกได้เลย</div></div>
+    </div>
+  </div>
+
+  <!-- GOALS -->
+  <div class="view" id="view-goals">
+    <div class="card" style="background:var(--moss-deep); color:#F2EEE1; border:none;">
+      <h3 style="color:#F2EEE1;">🎯 ภาพรวมเป้าหมายชีวิต</h3>
+      <p style="font-size:12.5px; opacity:.85; line-height:1.6; margin:0;">เรียนจีน → เรียนอังกฤษ → นิติศาสตร์ → ทนายที่ใช้ภาษาได้ → มั่นคงทางการเงิน → ดูแลพ่อแม่ให้สบายขึ้น</p>
+    </div>
+    <div id="goalHorizons"></div>
+  </div>
+
+  <!-- FINANCE -->
+  <div class="view" id="view-finance">
+    <div class="card">
+      <h3>🏡 แผนผ่อนที่ดิน</h3>
+      <div class="row2">
+        <div><label class="field-label">ราคาที่ดิน (บาท)</label><input type="number" id="landPrice" placeholder="3000000"></div>
+        <div><label class="field-label">เงินดาวน์ (บาท)</label><input type="number" id="landDown" placeholder="50000"></div>
+      </div>
+      <div class="row2">
+        <div><label class="field-label">วางดาวน์เดือน</label><input type="month" id="landDownMonth"></div>
+        <div><label class="field-label">เริ่มผ่อนเดือน</label><input type="month" id="landStartMonth"></div>
+      </div>
+      <label class="field-label">ผ่อนทั้งหมดกี่เดือน</label>
+      <input type="number" id="landMonths" placeholder="120">
+      <button class="btn small secondary" id="landSaveBtn">บันทึกแผนผ่อน</button>
+      <div id="landSummary" style="font-size:12.5px; color:var(--ink-soft); margin:12px 0 8px; line-height:1.8;"></div>
+      <div class="bigprogress"><i id="landBar" style="width:0%"></i></div>
+      <button class="btn small" id="landPayBtn" style="margin-top:12px;">✓ จ่ายงวดนี้แล้ว</button>
+    </div>
+
+    <div class="card">
+      <h3>📊 รายรับ–รายจ่ายรายเดือน</h3>
+      <div class="segment" id="finSeg">
+        <button class="on" data-t="in">รายรับ</button>
+        <button data-t="out">รายจ่าย</button>
+        <button data-t="save">เงินออม/ช่วยครอบครัว</button>
+      </div>
+      <div class="row2">
+        <div><label class="field-label">รายการ</label><input type="text" id="finDesc" placeholder="เช่น เงินเดือน, ค่าอาหาร"></div>
+        <div><label class="field-label">จำนวนเงิน (บาท)</label><input type="number" id="finAmt" placeholder="0"></div>
+      </div>
+      <button class="btn" id="finAddBtn">เพิ่มรายการ</button>
+    </div>
+
+    <div class="card">
+      <h3>เดือนนี้</h3>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="ico">📥</div><div class="num" id="finMonthIn">0</div><div class="lbl">รายรับ (บาท)</div></div>
+        <div class="stat-card"><div class="ico">📤</div><div class="num" id="finMonthOut">0</div><div class="lbl">รายจ่าย (บาท)</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📈 รายรับ–รายจ่าย ย้อนหลัง 6 เดือน</h3>
+      <svg id="finChart" viewBox="0 0 300 140" style="width:100%; height:auto; display:block;"></svg>
+      <div style="display:flex;gap:14px;font-size:10px;color:var(--ink-soft);margin-top:6px;">
+        <span>🟦 รายรับ</span><span>🟥 รายจ่าย (รวมค่างวดที่ดิน)</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>ประวัติรายการ</h3>
+      <div class="list-log" id="finLog"><div class="empty">ยังไม่มีรายการ</div></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="view" id="view-dash">
+    <div class="card" style="background:var(--moss-deep); border:none; color:#F2EEE1;">
+      <h3 style="color:#F2EEE1;">MY LIFE — <span id="dashYear">2026</span></h3>
+      <p style="font-size:12px; opacity:.8; margin:0;" id="dashEncourage">วันนี้ทำได้นิดเดียว ก็ยังดีกว่าไม่ทำเลย</p>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="ico">🇨🇳</div><div class="num" id="dCnDays">0/365</div><div class="lbl">วันเรียนจีน</div></div>
+      <div class="stat-card"><div class="ico">📚</div><div class="num" id="dCnHours">0 ชม.</div><div class="lbl">ชั่วโมงพัฒนาตัวเอง</div></div>
+      <div class="stat-card"><div class="ico">💰</div><div class="num" id="dSaving">0%</div><div class="lbl">เป้าหมายเงินออม</div></div>
+      <div class="stat-card"><div class="ico">🧘</div><div class="num" id="dHealth">0%</div><div class="lbl">ดูแลตัวเอง (7 วัน)</div></div>
+      <div class="stat-card"><div class="ico">🎯</div><div class="num" id="dGoals">0%</div><div class="lbl">ความคืบหน้าเป้าหมาย</div></div>
+      <div class="stat-card"><div class="ico">🔥</div><div class="num" id="dStreak">0</div><div class="lbl">วันต่อเนื่อง (จีน)</div></div>
+    </div>
+
+    <div class="card">
+      <h3>🗓 สรุปรายสัปดาห์/เดือน</h3>
+      <div class="segment" id="reviewSeg">
+        <button class="on" data-r="week">สัปดาห์นี้</button>
+        <button data-r="month">เดือนนี้</button>
+      </div>
+      <div id="reviewBody" style="font-size:13px; line-height:1.9;"></div>
+    </div>
+  </div>
+
+  <!-- JOURNAL -->
+  <div class="view" id="view-journal">
+    <div class="card">
+      <h3>❤️ My Journal — วันนี้</h3>
+      <label class="field-label">วันนี้เกิดอะไรขึ้น / รู้สึกอย่างไร</label>
+      <textarea id="jWhat" placeholder="เขียนอะไรก็ได้..."></textarea>
+      <label class="field-label">วันนี้ภูมิใจอะไร</label>
+      <textarea id="jProud" placeholder="สิ่งเล็ก ๆ ก็นับ"></textarea>
+      <label class="field-label">วันนี้เรียนรู้อะไร</label>
+      <textarea id="jLearn"></textarea>
+      <label class="field-label">วันนี้ทำอะไรให้ครอบครัว</label>
+      <textarea id="jFamily"></textarea>
+      <label class="field-label">อยากปรับปรุงพรุ่งนี้</label>
+      <textarea id="jImprove"></textarea>
+      <button class="btn" id="jSaveBtn">บันทึกวันนี้</button>
+    </div>
+    <div class="card">
+      <h3>ย้อนอ่าน</h3>
+      <div id="jList"><div class="empty">ยังไม่มีบันทึก เริ่มเขียนบรรทัดแรกได้เลย</div></div>
+    </div>
+  </div>
+
+  <!-- CAREER -->
+  <div class="view" id="view-career">
+    <div class="card">
+      <h3>💼 My Career <span class="tag" id="careerCount">0 บันทึก</span></h3>
+      <p style="font-size:12px; color:var(--ink-soft); margin:0;">เก็บพัฒนาการสายงาน HR ของตัวเองไว้ ใส่ Resume ได้ในอนาคต</p>
+    </div>
+    <div class="card">
+      <h3>บันทึกวันนี้</h3>
+      <label class="field-label">งานสำคัญวันนี้ / ทำสำเร็จ</label>
+      <textarea id="carTask" placeholder="เช่น ปิดสรรหาตำแหน่ง QA ได้ 2 อัตรา"></textarea>
+      <label class="field-label">สิ่งที่เรียนรู้</label>
+      <textarea id="carLearn"></textarea>
+      <label class="field-label">ปัญหาที่เจอ / แก้ยังไง</label>
+      <textarea id="carProblem"></textarea>
+      <label class="field-label">ทักษะใหม่ที่ได้</label>
+      <input type="text" id="carSkill" placeholder="เช่น การเจรจาต่อรอง">
+      <label class="item" style="padding:0 0 10px;">
+        <span class="check" id="carResumeCheck">✓</span>
+        <span class="label">ผลงานนี้ใส่ Resume ได้</span>
+      </label>
+      <button class="btn" id="carSaveBtn">บันทึก</button>
+    </div>
+    <div class="card">
+      <h3>⭐ ผลงานที่ใส่ Resume ได้</h3>
+      <div class="list-log" id="carResumeLog"><div class="empty">ยังไม่มีรายการ</div></div>
+    </div>
+    <div class="card">
+      <h3>📖 ประวัติทั้งหมด</h3>
+      <div class="list-log" id="carLog"><div class="empty">ยังไม่มีบันทึก</div></div>
+    </div>
+  </div>
+
+  <!-- ENGLISH -->
+  <div class="view" id="view-english">
+    <div class="card">
+      <h3>🇬🇧 ภาษาอังกฤษ — OpenDurian <span class="tag" id="enProgressTag">0 / 30 วัน</span></h3>
+      <p style="font-size:12px; color:var(--ink-soft); margin:0 0 10px;">Box Set ปูพื้นฐานภาษาอังกฤษ 30 วัน — Step 1 ฝึกสะกดคำ (Day 1–4) · Step 2 Grammar (Day 5–12) · Step 3 ฝึกใช้จริง/แต่งประโยค (Day 13–30)</p>
+      <div class="bigprogress"><i id="enBar" style="width:0%; background:var(--dusk);"></i></div>
+    </div>
+
+    <div class="card">
+      <h3>📅 วันนี้เรียน Day ไหน</h3>
+      <label class="field-label">เลือก Day</label>
+      <select id="enDaySelect"></select>
+      <div id="enDayDetail" style="font-size:12.5px; line-height:1.7; background:var(--paper-dim); border-radius:10px; padding:10px 12px; margin-bottom:10px;"></div>
+      <label class="field-label">เรียนจริงกี่นาที</label>
+      <input type="number" id="enMinutes" placeholder="เช่น 30">
+      <label class="field-label">โน้ตส่วนตัว (คำศัพท์ยาก, สิ่งที่ต้องทบทวน)</label>
+      <textarea id="enNote" placeholder="เขียนอะไรก็ได้..."></textarea>
+      <div class="row2">
+        <button class="btn secondary" id="enMinBtn">เรียนขั้นต่ำ 10 นาที</button>
+        <button class="btn" id="enSaveBtn">ทำ Day นี้เสร็จแล้ว ✓</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🗓 ความคืบหน้ารายวัน</h3>
+      <div class="heatmap" id="enHeatmap"></div>
+      <div style="display:flex;gap:14px;font-size:10px;color:var(--ink-soft);margin-top:10px;">
+        <span>🟩 เรียนแล้ว</span><span>⬜ ยังไม่ถึง</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📖 ประวัติการเรียน</h3>
+      <div class="list-log" id="enLog"><div class="empty">ยังไม่มีบันทึก เริ่ม Day 1 ได้เลย</div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-sheet">
+    <button class="modal-close" id="settingsClose">✕</button>
+    <h2>⚙️ ตั้งค่าของฉัน</h2>
+
+    <label class="field-label">ชื่อ/ชื่อเล่นของฉัน</label>
+    <input type="text" id="setName" placeholder="เอส">
+
+    <label class="field-label">เวลาเข้างาน</label>
+    <div class="row2">
+      <input type="time" id="setWorkStart">
+      <input type="time" id="setWorkEnd">
+    </div>
+    <label class="field-label">เวลาเลิกงานเมื่อมี OT</label>
+    <input type="time" id="setOtEnd">
+
+    <label class="field-label">วันหยุดประจำสัปดาห์</label>
+    <div id="setDaysOff" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px;"></div>
+
+    <label class="field-label">วันอาทิตย์หยุดต่อเดือน (โดยประมาณ)</label>
+    <input type="number" id="setSundaysOff" min="0" max="4" placeholder="2">
+
+    <h2 style="margin-top:22px;">🧘 เป้าหมายสุขภาพประจำวัน</h2>
+    <label class="field-label">เวลาเข้านอน</label>
+    <input type="time" id="setSleepTime">
+    <label class="field-label">เป้าหมายดื่มน้ำ (มิลลิลิตร)</label>
+    <input type="number" id="setWaterTarget" placeholder="2000">
+    <label class="field-label">ยืดคอ/บ่า/ไหล่ (นาที)</label>
+    <input type="number" id="setStretchMin" placeholder="5">
+
+    <button class="btn" id="settingsSave" style="margin-top:6px;">บันทึกการตั้งค่า</button>
+
+    <h2 style="margin-top:22px;">💾 สำรองข้อมูล</h2>
+    <p style="font-size:12px; color:var(--ink-soft); margin:0 0 10px;">ข้อมูลเก็บอยู่ในเบราว์เซอร์นี้เท่านั้น ถ้าเปลี่ยนเครื่อง/เบราว์เซอร์ ให้ Export แล้วนำไป Import อีกฝั่ง</p>
+    <div class="row2">
+      <button class="btn secondary" id="exportBtn">📤 Export JSON</button>
+      <button class="btn secondary" id="importBtn">📥 Import JSON</button>
+    </div>
+    <input type="file" id="importFile" accept="application/json" style="display:none;">
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-view="today"><span class="ico">🏠</span>วันนี้</button>
+  <button class="tab" data-view="chinese"><span class="ico">🇨🇳</span>ภาษาจีน</button>
+  <button class="tab" data-view="english"><span class="ico">🇬🇧</span>อังกฤษ</button>
+  <button class="tab" data-view="goals"><span class="ico">🎯</span>เป้าหมาย</button>
+  <button class="tab" data-view="finance"><span class="ico">💰</span>การเงิน</button>
+  <button class="tab" data-view="dash"><span class="ico">📊</span>Dashboard</button>
+  <button class="tab" data-view="journal"><span class="ico">❤️</span>Journal</button>
+  <button class="tab" data-view="career"><span class="ico">💼</span>Career</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const KEY = 'mylifetracker:v1';
+  const $ = (s,el=document)=>el.querySelector(s);
+  const $$ = (s,el=document)=>Array.from(el.querySelectorAll(s));
+
+  const todayStr = ()=> new Date().toISOString().slice(0,10);
+  const monthStr = ()=> new Date().toISOString().slice(0,7);
+  const thaiDate = (d)=> new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
+
+  const defaultState = {
+    settings: {name:'เสาวลักษณ์', workStart:'06:00', workEnd:'16:20', otEnd:'19:40', daysOff:['SA'], sundaysOffPerMonth:2, sleepTime:'22:30', waterTargetMl:2000, stretchMinutes:5},
+    today: {},          // { 'YYYY-MM-DD': { work:{}, dev:{}, health:{}, life:{} } }
+    chinese: {logs:{}}, // logs: date -> {lessonId,lessonNote,minutes,vocab,sentence,level,reviewed,minimal}
+    english: {logs:{}}, // logs: date -> {day, minutes, note}
+    goals: null,        // set below
+    finance: {landPlan:null, txns:[]},
+    journal: {entries:{}}, // date -> {what,proud,learn,family,improve}
+    career: {entries:[]} // [{date,task,learn,problem,skill,resume}]
+  };
+
+  // jiewfudao curriculum structure
+  const CN_CURRICULUM = [
+    {group:'พื้นฐาน 1 (บทที่ 1–15)', from:1, to:15},
+    {group:'พื้นฐาน 2 (บทที่ 16–30)', from:16, to:30},
+    {group:'พื้นฐาน 3 (บทที่ 31–40)', from:31, to:40},
+    {group:'พื้นฐาน 4 (บทที่ 41–45)', from:41, to:45},
+    {group:'พื้นฐาน 5 (บทที่ 46–47)', from:46, to:47},
+    {group:'เพิ่มเติม', from:48, to:48}
+  ];
+  const CN_TOTAL_LESSONS = 48;
+  const WEEKDAYS = [['SU','อา'],['MO','จ'],['TU','อ'],['WE','พ'],['TH','พฤ'],['FR','ศ'],['SA','ส']];
+
+  // OpenDurian "Box Set ปูพื้นฐานภาษาอังกฤษ 30 วัน" curriculum
+  const EN_CURRICULUM = [
+    {day:1, book:'ฝึกสะกดคำ', minutes:60, units:['Unit 1 เข้าใจพื้นฐานของภาษาอังกฤษ','Unit 2 พยัญชนะ','Unit 6 รวมแบบฝึกหัดการสะกดคำ (พยัญชนะเดี่ยว/ผสม)']},
+    {day:2, book:'ฝึกสะกดคำ', minutes:50, units:['Unit 3 สระ','Unit 6 รวมแบบฝึกหัดการสะกดคำ (สระเดี่ยว/ผสม)']},
+    {day:3, book:'ฝึกสะกดคำ', minutes:80, units:['Unit 4 ตัวสะกด','Unit 6 รวมแบบฝึกหัดตัวสะกด (เดี่ยว/ผสม/สำเร็จรูป)']},
+    {day:4, book:'ฝึกสะกดคำ', minutes:30, units:['Unit 5 เคล็ดลับการออกเสียง']},
+    {day:5, book:'Grammar', minutes:50, units:['Unit 1 Countable Nouns','Unit 2 Uncountable Nouns','Unit 3 Proper Nouns','Unit 4 A/An/The','Unit 5 This/That/These/Those']},
+    {day:6, book:'Grammar', minutes:40, units:['Unit 6 Action Verbs','Unit 7 Verb to be','Unit 8 Adjectives','Unit 9 Adverbs']},
+    {day:7, book:'Grammar', minutes:30, units:["Unit 10 Pronouns","Unit 11 Possessive Adjectives","Unit 12 การใช้ 's หรือ ' แสดงความเป็นเจ้าของ"]},
+    {day:8, book:'Grammar', minutes:40, units:['Unit 13 Prepositions of Place','Unit 14 Prepositions of Time','Unit 15 Modal Verbs','Unit 16 There is/There are']},
+    {day:9, book:'Grammar', minutes:60, units:['Unit 17 Present Simple','Unit 18 Present Continuous','Unit 19 Past Simple','Unit 20 Future Simple','Unit 21 Present Perfect','Unit 22 Verb Conjugation']},
+    {day:10, book:'Grammar', minutes:50, units:['Unit 23 Some-Any-All-Each-Every','Unit 24 Between-Among','Unit 25 Another-Other','Unit 26 Everyday-Every day','Unit 27 Much-Many / How much-How many']},
+    {day:11, book:'Grammar', minutes:20, units:['Unit 28 เปรียบเทียบ Comparative','Unit 29 เปรียบเทียบ Superlative']},
+    {day:12, book:'Grammar', minutes:30, units:['Unit 30 Passive Voice','Unit 31 If-clause และเนื้อหาเสริมท้ายเล่ม']},
+    {day:13, book:'แต่งประโยค', minutes:25, units:['Unit 1 การแนะนำชื่อตัวเอง','Unit 2 การบอกอายุ','Unit 3 การบอกวันเกิด','Unit 4 การบอกอาชีพ','Unit 5 การพูดถึงสถานภาพ']},
+    {day:14, book:'แต่งประโยค', minutes:25, units:['Unit 6 การบอกที่มา','Unit 7 การบอกที่อยู่','Unit 8 การพูดถึงบ้านเกิด','Unit 9 การพูดถึงครอบครัว','Unit 10 การบอกลักษณะนิสัย (ตัวเอง)']},
+    {day:15, book:'แต่งประโยค', minutes:25, units:['Unit 11 การพูดถึงประวัติการศึกษา','Unit 12 การพูดถึงอาชีพในฝัน','Unit 13 การทักทายและการกล่าวลา','Unit 14 การบอกวันและเวลา','Unit 15 การบอกจำนวน']},
+    {day:16, book:'แต่งประโยค', minutes:30, units:['Unit 16 การระบุสิ่งของใกล้-ไกล','Unit 17 การบอกรูปร่างและขนาด','Unit 18 สิ่งที่ทำเป็นประจำทุกเช้า','Unit 19 สิ่งที่ทำเป็นประจำตอนเที่ยง','Unit 20 สิ่งที่ทำเป็นประจำก่อนนอน','Unit 21 สิ่งที่ทำเป็นบางครั้ง']},
+    {day:17, book:'แต่งประโยค', minutes:25, units:['Unit 22 การพูดถึงกิจกรรมยามว่าง','Unit 23 การบอกสิ่งที่ชอบ','Unit 24 การบอกสิ่งที่ไม่ชอบ','Unit 25 การถามถึงงานอดิเรกของคนอื่น','Unit 26 การบอกความถี่ในการทำกิจกรรม','Unit 27 การบอกสถานที่ทำกิจกรรม']},
+    {day:18, book:'แต่งประโยค', minutes:30, units:['Unit 28 การบอกเหตุผลสั้น ๆ','Unit 29 การสั่งอาหาร/เครื่องดื่ม','Unit 30 การระบุรายละเอียดเพิ่มเติม','Unit 31 การเลือกวิธีชำระเงิน','Unit 32 การถามทาง','Unit 33 การออมเงิน']},
+    {day:19, book:'แต่งประโยค', minutes:30, units:['Unit 34 การท่องเที่ยว','Unit 35 การดูแลสุขภาพ','Unit 36 การบอกสภาพอากาศ','Unit 37 การพูดถึงสัตว์เลี้ยง','Unit 38 การพูดถึงกีฬา','Unit 39 การพูดถึงลักษณะนิสัยของคนอื่น']},
+    {day:20, book:'แต่งประโยค', minutes:30, units:['Unit 40 การบอกวิธีเดินทาง','Unit 41 การบอกระยะเวลาเดินทาง','Unit 42 การบอกอารมณ์และความรู้สึก','Unit 43 การซื้อของ','Unit 44 การขอความช่วยเหลือ','Unit 45 การเชิญ']},
+    {day:21, book:'แต่งประโยค', minutes:30, units:['Unit 46 การให้คำแนะนำ','Unit 47 การดูหนัง','Unit 48 การบอกอาการเจ็บป่วยเบื้องต้น','Unit 49 การขออนุญาต','Unit 50 การบอกประสบการณ์','Unit 51 การถามประสบการณ์']},
+    {day:22, book:'แต่งประโยค', minutes:25, units:['Unit 52 บอกความกลัว','Unit 53 บอกจุดอ่อน จุดแข็ง','Unit 54 การทำความสะอาดบ้าน','Unit 55 การลางาน','Unit 56 การพัฒนาตัวเอง']},
+    {day:23, book:'แต่งประโยค', minutes:30, units:['Unit 57 การลืมของ','Unit 58 การทำของหาย','Unit 59 การเตือน','Unit 60 การแสดงความเป็นเจ้าของ','Unit 61 อาหาร','Unit 62 เครื่องดื่ม']},
+    {day:24, book:'แต่งประโยค', minutes:25, units:['Unit 63 ความสามารถ','Unit 64 สิ่งที่ตัวเองถนัดและไม่ถนัด','Unit 65 ฤดูกาล','Unit 66 เสื้อผ้า','Unit 67 ความคุ้นเคยหรือความเคยชิน']},
+    {day:25, book:'แต่งประโยค', minutes:25, units:['Unit 68 การบอกอารมณ์ด้านลบ','Unit 69 การบอกอารมณ์ด้านบวก','Unit 70 การซื้อของและการใช้จ่าย','Unit 71 การเรียน','Unit 72 การยืมของ']},
+    {day:26, book:'แต่งประโยค', minutes:25, units:['Unit 73 สิ่งที่ขาด','Unit 74 นิสัยที่ไม่ดี','Unit 75 เครื่องใช้ไฟฟ้า (เปิด-ปิด-พัง)','Unit 76 อาการบาดเจ็บ','Unit 77 ความสัมพันธ์']},
+    {day:27, book:'แต่งประโยค', minutes:35, units:['Unit 78 เวลาว่าง','Unit 79 การขอบคุณ','Unit 80 การขอโทษ','Unit 81 ถามสถานที่ทำกิจกรรม','Unit 82 การเสนอให้ความช่วยเหลือ','Unit 83 ลักษณะภายนอก','Unit 84 การเปรียบเทียบสิ่งของ']},
+    {day:28, book:'แต่งประโยค', minutes:30, units:['Unit 85 การบอกแผน (วันนี้/พรุ่งนี้จะทำอะไร)','Unit 86 พูดถึงวันของตัวเอง','Unit 87 บอกความจำเป็น','Unit 88 การแสดงความคิดเห็น','Unit 89 การถามความคิดเห็น','Unit 90 การถามหาเหตุผล']},
+    {day:29, book:'แต่งประโยค', minutes:30, units:['Unit 91 การบอกความต้องการ','Unit 92 การตัดสินใจ','Unit 93 การบอกตำแหน่ง','Unit 94 การพูดถึงงานที่ทำ','Unit 95 การพูดถึงหน้าที่ในที่ทำงาน','Unit 96 การบอกความรู้สึกต่องาน']},
+    {day:30, book:'แต่งประโยค', minutes:20, units:['Unit 97 บอกข้อดีข้อเสีย','Unit 98 การปรุงอาหาร','Unit 99 การให้คำสัญญา','Unit 100 การชม']}
+  ];
+  const EN_TOTAL_DAYS = 30;
+
+  const defaultGoals = [
+    {title:'เป้าหมาย 3 เดือน', sub:'สร้างนิสัย', items:[
+      {t:'เรียนจีนอย่างต่อเนื่อง', done:false},
+      {t:'สร้างนิสัยการเรียนทุกวัน', done:false}
+    ]},
+    {title:'เป้าหมาย 1 ปี', sub:'พื้นฐานจีน', items:[
+      {t:'เรียนจีนต่อเนื่อง 1 ปี', done:false},
+      {t:'มีพื้นฐานจีนที่ใช้กับงานได้', done:false}
+    ]},
+    {title:'เป้าหมาย 3 ปี', sub:'ภาษา + งาน', items:[
+      {t:'ภาษาอังกฤษดีขึ้น', done:false},
+      {t:'มีผลสอบภาษารองรับ', done:false},
+      {t:'พัฒนางานและรายได้', done:false},
+      {t:'เตรียมพร้อมเรียนนิติศาสตร์', done:false}
+    ]},
+    {title:'เป้าหมาย 5 ปี+', sub:'ทนายที่ใช้ภาษาได้', items:[
+      {t:'เรียนนิติศาสตร์', done:false},
+      {t:'พัฒนาตัวเองเข้าสู่สายกฎหมาย', done:false},
+      {t:'ใช้ภาษาในงานกฎหมาย', done:false},
+      {t:'มีความมั่นคงทางการเงิน', done:false},
+      {t:'มีที่ดิน/บ้าน', done:false},
+      {t:'ดูแลพ่อแม่ได้ดีขึ้น', done:false}
+    ]}
+  ];
+
+  const TODAY_ITEMS = {
+    work: [ {id:'work', label:'ทำงาน'}, {id:'ot', label:'OT'} ],
+    dev: [ {id:'cnclip', label:'เรียนจีน 1 คลิป'}, {id:'review', label:'ทบทวนบทเรียน'}, {id:'onehour', label:'เป้าหมาย 1 ชั่วโมง'} ],
+    health: [ {id:'water', label:'ดื่มน้ำให้พอ'}, {id:'stretch', label:'ยืดคอ/บ่า/ไหล่'}, {id:'sleep', label:'เข้านอนตามเวลา'} ],
+    life: [ {id:'money', label:'บันทึกรายจ่าย'}, {id:'kind', label:'สิ่งดี ๆ ให้ตัวเอง/ครอบครัว'} ]
+  };
+
+  const QUOTES = [
+    'ไม่ต้องสมบูรณ์แบบ แค่เดินต่อ',
+    'วันนี้ทำได้นิดเดียว ก็ยังดีกว่าไม่ทำเลย',
+    'สิ่งที่คุณกำลังทำวันนี้ ไม่ได้มีแค่เพื่อวันนี้ แต่กำลังสร้างอนาคตของคุณและครอบครัว',
+    'ไม่เป็นไร พรุ่งนี้เริ่มใหม่ได้',
+    'ทีละก้าว ก็ถึงปลายทางได้'
+  ];
+
+  let state = null;
+  const STORAGE_KEY = 'mylifetracker_v1';
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      state = raw ? JSON.parse(raw) : structuredClone(defaultState);
+    }catch(e){
+      state = structuredClone(defaultState);
+    }
+    if(!state.settings) state.settings = structuredClone(defaultState.settings);
+    if(!state.goals) state.goals = structuredClone(defaultGoals);
+    if(!state.finance) state.finance = {landPlan:null, txns:[]};
+    if(!state.chinese) state.chinese = {logs:{}};
+    if(!state.english) state.english = {logs:{}};
+    if(!state.today) state.today = {};
+    if(!state.journal) state.journal = {entries:{}};
+    if(!state.career) state.career = {entries:[]};
+    return Promise.resolve();
+  }
+
+  let saveTimer=null;
+  function save(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=>{
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+      catch(e){ console.error('save failed', e); toast('บันทึกไม่สำเร็จ — พื้นที่เก็บข้อมูลอาจเต็ม'); }
+    }, 200);
+  }
+
+  function toast(msg){
+    const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 1800);
+  }
+
+  // ---------- TABS ----------
+  $$('.tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      $$('.tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      $$('.view').forEach(v=>v.classList.remove('active'));
+      $('#view-'+btn.dataset.view).classList.add('active');
+      renderAll();
+    });
+  });
+
+  // ---------- SETTINGS ----------
+  function openSettings(){
+    const s = state.settings;
+    $('#setName').value = s.name || '';
+    $('#setWorkStart').value = s.workStart || '';
+    $('#setWorkEnd').value = s.workEnd || '';
+    $('#setOtEnd').value = s.otEnd || '';
+    $('#setSundaysOff').value = s.sundaysOffPerMonth ?? '';
+    $('#setSleepTime').value = s.sleepTime || '';
+    $('#setWaterTarget').value = s.waterTargetMl || '';
+    $('#setStretchMin').value = s.stretchMinutes || '';
+    const dayWrap = $('#setDaysOff'); dayWrap.innerHTML='';
+    WEEKDAYS.forEach(([code,label])=>{
+      const id = 'day_'+code;
+      const wrap = document.createElement('div'); wrap.className='chk-row';
+      wrap.innerHTML = `<input type="checkbox" id="${id}" ${s.daysOff.includes(code)?'checked':''}><label for="${id}">${label}</label>`;
+      dayWrap.appendChild(wrap);
+    });
+    $('#settingsModal').classList.add('show');
+  }
+  $('#settingsBtn').addEventListener('click', openSettings);
+  $('#settingsClose').addEventListener('click', ()=> $('#settingsModal').classList.remove('show'));
+  $('#settingsModal').addEventListener('click', (e)=>{ if(e.target.id==='settingsModal') $('#settingsModal').classList.remove('show'); });
+
+  $('#settingsSave').addEventListener('click', ()=>{
+    const daysOff = WEEKDAYS.map(([code])=>code).filter(code=> $('#day_'+code).checked);
+    state.settings = {
+      name: $('#setName').value.trim(),
+      workStart: $('#setWorkStart').value,
+      workEnd: $('#setWorkEnd').value,
+      otEnd: $('#setOtEnd').value,
+      daysOff,
+      sundaysOffPerMonth: parseInt($('#setSundaysOff').value)||0,
+      sleepTime: $('#setSleepTime').value || '',
+      waterTargetMl: parseInt($('#setWaterTarget').value)||0,
+      stretchMinutes: parseInt($('#setStretchMin').value)||0
+    };
+    save();
+    $('#settingsModal').classList.remove('show');
+    toast('บันทึกการตั้งค่าแล้ว');
+    renderAll();
+  });
+
+  $('#exportBtn').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `my-life-tracker-backup-${todayStr()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast('Export แล้ว — เซฟไฟล์ไว้ให้ดี');
+  });
+  $('#importBtn').addEventListener('click', ()=> $('#importFile').click());
+  $('#importFile').addEventListener('change', (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev)=>{
+      try{
+        const imported = JSON.parse(ev.target.result);
+        state = imported;
+        if(!state.settings) state.settings = structuredClone(defaultState.settings);
+        if(!state.goals) state.goals = structuredClone(defaultGoals);
+        save();
+        toast('Import สำเร็จ');
+        renderAll();
+      }catch(err){ toast('ไฟล์ไม่ถูกต้อง'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // ---------- TODAY ----------
+  function getTodayEntry(){
+    const d = todayStr();
+    if(!state.today[d]) state.today[d] = {work:{}, dev:{}, health:{}, life:{}};
+    return state.today[d];
+  }
+
+  function todayIsDayOff(){
+    const code = WEEKDAYS[new Date().getDay()][0];
+    return state.settings.daysOff.includes(code);
+  }
+
+  function renderToday(){
+    const entry = getTodayEntry();
+    const s = state.settings;
+    const isOff = todayIsDayOff();
+    $('#workDate').textContent = isOff ? 'วันหยุด 🌿' : thaiDate(todayStr());
+    let sched = '';
+    if(!isOff && (s.workStart||s.workEnd||s.otEnd)){
+      sched = `<div style="font-size:11px;color:var(--ink-soft);margin:-6px 0 10px;">เข้างาน ${s.workStart||'—'} · เลิกปกติ ${s.workEnd||'—'} · OT ถึง ${s.otEnd||'—'}</div>`;
+    }
+    const schedHolder = document.getElementById('workSchedInfo');
+    if(schedHolder) schedHolder.remove();
+    if(sched){
+      const holder = document.createElement('div'); holder.id='workSchedInfo'; holder.innerHTML = sched;
+      $('#workItems').before(holder);
+    }
+    const groups = [['work','workItems'],['dev','devItems'],['health','healthItems'],['life','lifeItems']];
+    groups.forEach(([key,elId])=>{
+      const container = $('#'+elId); container.innerHTML='';
+      TODAY_ITEMS[key].forEach(it=>{
+        const done = !!entry[key][it.id];
+        let label = it.label;
+        if(it.id==='water') label = `ดื่มน้ำให้ครบ ${s.waterTargetMl||2000} มล.`;
+        if(it.id==='stretch') label = `ยืดคอ/บ่า/ไหล่ ${s.stretchMinutes||5} นาที`;
+        if(it.id==='sleep') label = `เข้านอนก่อน ${s.sleepTime||'22:30'} น.`;
+        const row = document.createElement('div'); row.className='item';
+        row.innerHTML = `<span class="check ${done?'done':''}">✓</span><span class="label ${done?'done':''}">${label}</span>`;
+        row.addEventListener('click', ()=>{
+          entry[key][it.id] = !entry[key][it.id];
+          save(); renderToday(); renderHero(); renderDashboard();
+        });
+        container.appendChild(row);
+      });
+    });
+    const msgs = ['ไม่เป็นไร พรุ่งนี้เริ่มใหม่ได้','ทีละก้าว ก็ถึงปลายทางได้','คุณกำลังสร้างอนาคตของตัวเองอยู่'];
+    $('#encourageMsg').textContent = msgs[new Date().getDate()%msgs.length];
+  }
+
+  function todayCompletionRatio(){
+    const entry = getTodayEntry();
+    let total=0, done=0;
+    ['work','dev','health','life'].forEach(k=>{
+      TODAY_ITEMS[k].forEach(it=>{ total++; if(entry[k][it.id]) done++; });
+    });
+    return total? done/total : 0;
+  }
+
+  function chineseStreak(){
+    let streak=0;
+    let d = new Date();
+    // if today not logged yet, start counting from yesterday backward but still show today's potential
+    while(true){
+      const ds = d.toISOString().slice(0,10);
+      if(state.chinese.logs[ds]) { streak++; d.setDate(d.getDate()-1); }
+      else break;
+    }
+    return streak;
+  }
+
+  function renderHero(){
+    $('#todayPill').textContent = thaiDate(todayStr());
+    const name = state.settings.name;
+    document.querySelector('.path-hero h2').textContent = name ? `เดินไปทีละก้าว, ${name}` : 'เดินไปทีละก้าว';
+    $('#heroQuote').textContent = QUOTES[new Date().getDate()%QUOTES.length];
+    const ratio = todayCompletionRatio();
+    const stonesEl = $('#stones'); stonesEl.innerHTML='';
+    const n = 8;
+    for(let i=0;i<n;i++){
+      const filled = (i/n) < ratio;
+      const s = document.createElement('div'); s.className='stone';
+      s.innerHTML = `<i style="width:${filled?100:0}%"></i>`;
+      stonesEl.appendChild(s);
+    }
+    $('#streakLabel').textContent = `เรียนจีนต่อเนื่อง ${chineseStreak()} วัน`;
+  }
+
+  // ---------- CHINESE ----------
+  let cnSelectedStars = 0;
+  $$('#cnStars .star').forEach(st=>{
+    st.addEventListener('click', ()=>{
+      cnSelectedStars = parseInt(st.dataset.v);
+      $$('#cnStars .star').forEach(s=> s.classList.toggle('on', parseInt(s.dataset.v)<=cnSelectedStars));
+    });
+  });
+  let cnReviewed = false;
+  $('#cnReviewCheck').addEventListener('click', ()=>{
+    cnReviewed = !cnReviewed;
+    $('#cnReviewCheck').classList.toggle('done', cnReviewed);
+  });
+
+  function populateLessonSelect(){
+    const sel = $('#cnLessonSelect'); sel.innerHTML='';
+    CN_CURRICULUM.forEach(g=>{
+      const og = document.createElement('optgroup'); og.label = g.group;
+      for(let n=g.from; n<=g.to; n++){
+        const opt = document.createElement('option'); opt.value=n; opt.textContent = 'บทที่ '+n;
+        og.appendChild(opt);
+      }
+      sel.appendChild(og);
+    });
+    // default to next lesson after the highest logged so far
+    const logs = Object.values(state.chinese.logs);
+    const maxLogged = logs.reduce((m,l)=> Math.max(m, l.lessonId||0), 0);
+    const next = Math.min(CN_TOTAL_LESSONS, maxLogged+1 || 1);
+    sel.value = next || 1;
+  }
+
+  function saveChineseLog(minimal){
+    const d = todayStr();
+    const minutes = minimal? 10 : (parseInt($('#cnMinutes').value)||0);
+    state.chinese.logs[d] = {
+      lessonId: parseInt($('#cnLessonSelect').value)||null,
+      lessonNote: $('#cnLesson').value || '',
+      minutes,
+      vocab: parseInt($('#cnVocab').value)||0,
+      sentence: $('#cnSentence').value||'',
+      level: cnSelectedStars||0,
+      reviewed: cnReviewed,
+      minimal: !!minimal
+    };
+    save();
+    toast(minimal? 'เก็บนิสัยไว้แล้ว วันนี้ก็นับ 🌱' : 'บันทึกบทเรียนวันนี้แล้ว 🇨🇳');
+    $('#cnLesson').value=''; $('#cnMinutes').value=''; $('#cnVocab').value=''; $('#cnSentence').value='';
+    cnSelectedStars=0; cnReviewed=false;
+    $$('#cnStars .star').forEach(s=>s.classList.remove('on'));
+    $('#cnReviewCheck').classList.remove('done');
+    renderChinese(); renderHero(); renderDashboard(); renderToday();
+  }
+  $('#cnSaveBtn').addEventListener('click', ()=>saveChineseLog(false));
+  $('#cnMinBtn').addEventListener('click', ()=>saveChineseLog(true));
+
+  function renderChinese(){
+    populateLessonSelect();
+    const logs = state.chinese.logs;
+    const dates = Object.keys(logs);
+    const totalMinutes = dates.reduce((a,d)=>a+(logs[d].minutes||0),0);
+    $('#cnTotalHours').textContent = (totalMinutes/60).toFixed(1);
+    $('#cnDaysCount').textContent = `${dates.length} / 365`;
+    $('#cnYearBar').style.width = Math.min(100,(dates.length/365)*100)+'%';
+    $('#cnStreak').textContent = chineseStreak()+' วันต่อเนื่อง';
+
+    const maxLesson = dates.reduce((m,d)=> Math.max(m, logs[d].lessonId||0), 0);
+    $('#cnLessonProgress').textContent = `บทเรียน ${maxLesson} / ${CN_TOTAL_LESSONS} (จิ๋วฟู่เต๋า)`;
+    $('#cnLessonBar').style.width = Math.min(100,(maxLesson/CN_TOTAL_LESSONS)*100)+'%';
+
+    // heatmap: last 35 days
+    const hm = $('#cnHeatmap'); hm.innerHTML='';
+    const cells=[];
+    for(let i=34;i>=0;i--){
+      const d = new Date(); d.setDate(d.getDate()-i);
+      const ds = d.toISOString().slice(0,10);
+      cells.push(ds);
+    }
+    cells.forEach(ds=>{
+      const log = logs[ds];
+      const cell = document.createElement('div');
+      cell.className = 'hcell' + (log? (log.minimal?' min':' done'):'');
+      cell.title = ds + (log? ` — ${log.minutes||0} นาที`:'');
+      const dn = document.createElement('span'); dn.className='dn'; dn.textContent = new Date(ds).getDate();
+      cell.appendChild(dn);
+      hm.appendChild(cell);
+    });
+
+    // log list, most recent first
+    const logEl = $('#cnLog');
+    const sortedDates = dates.sort().reverse().slice(0,20);
+    if(sortedDates.length===0){ logEl.innerHTML='<div class="empty">ยังไม่มีบันทึก เริ่มบทเรียนแรกได้เลย</div>'; return; }
+    logEl.innerHTML = sortedDates.map(d=>{
+      const l = logs[d];
+      const lessonLabel = l.lessonId ? `บทที่ ${l.lessonId}` : 'ขั้นต่ำ';
+      const note = l.lessonNote ? ` — ${l.lessonNote}` : '';
+      return `<div class="log-row"><span>${thaiDate(d)} — ${lessonLabel}${note}</span><span>${l.minutes||0} นาที ${'★'.repeat(l.level||0)}</span></div>`;
+    }).join('');
+  }
+
+  // ---------- ENGLISH ----------
+  function populateEnglishDaySelect(){
+    const sel = $('#enDaySelect'); sel.innerHTML='';
+    EN_CURRICULUM.forEach(d=>{
+      const opt = document.createElement('option'); opt.value=d.day;
+      opt.textContent = `Day ${d.day} — ${d.book} (${d.minutes} นาที)`;
+      sel.appendChild(opt);
+    });
+    const doneDays = Object.values(state.english.logs).map(l=>l.day);
+    const maxDone = doneDays.length? Math.max(...doneDays) : 0;
+    sel.value = Math.min(EN_TOTAL_DAYS, maxDone+1 || 1);
+    renderEnDayDetail();
+  }
+  function renderEnDayDetail(){
+    const dayNum = parseInt($('#enDaySelect').value);
+    const d = EN_CURRICULUM.find(x=>x.day===dayNum);
+    if(!d){ $('#enDayDetail').innerHTML=''; return; }
+    $('#enDayDetail').innerHTML = `<b>${d.book}</b> · แนะนำ ${d.minutes} นาที<br>` + d.units.map(u=>'• '+u).join('<br>');
+  }
+  $('#enDaySelect').addEventListener('change', renderEnDayDetail);
+
+  function saveEnglishLog(minimal){
+    const dayNum = parseInt($('#enDaySelect').value);
+    const d = todayStr();
+    state.english.logs[d] = {
+      day: dayNum,
+      minutes: minimal? 10 : (parseInt($('#enMinutes').value)||0),
+      note: $('#enNote').value||'',
+      minimal: !!minimal
+    };
+    save();
+    toast(minimal? 'เก็บนิสัยไว้แล้ว 🌱' : `บันทึก Day ${dayNum} แล้ว 🇬🇧`);
+    $('#enMinutes').value=''; $('#enNote').value='';
+    renderEnglish(); renderDashboard(); renderHero();
+  }
+  $('#enSaveBtn').addEventListener('click', ()=>saveEnglishLog(false));
+  $('#enMinBtn').addEventListener('click', ()=>saveEnglishLog(true));
+
+  function renderEnglish(){
+    populateEnglishDaySelect();
+    const logs = state.english.logs;
+    const dates = Object.keys(logs);
+    const doneDays = new Set(Object.values(logs).map(l=>l.day));
+    $('#enProgressTag').textContent = `${doneDays.size} / ${EN_TOTAL_DAYS} วัน`;
+    $('#enBar').style.width = Math.min(100,(doneDays.size/EN_TOTAL_DAYS)*100)+'%';
+
+    const hm = $('#enHeatmap'); hm.innerHTML='';
+    for(let i=1;i<=EN_TOTAL_DAYS;i++){
+      const cell = document.createElement('div');
+      cell.className = 'hcell' + (doneDays.has(i)?' done':'');
+      const dn = document.createElement('span'); dn.className='dn'; dn.textContent = i;
+      cell.appendChild(dn);
+      hm.appendChild(cell);
+    }
+
+    const logEl = $('#enLog');
+    const sortedDates = dates.sort().reverse().slice(0,20);
+    if(sortedDates.length===0){ logEl.innerHTML='<div class="empty">ยังไม่มีบันทึก เริ่ม Day 1 ได้เลย</div>'; return; }
+    logEl.innerHTML = sortedDates.map(dt=>{
+      const l = logs[dt];
+      return `<div class="log-row"><span>${thaiDate(dt)} — Day ${l.day}${l.note? ' · '+l.note:''}</span><span>${l.minutes||0} นาที</span></div>`;
+    }).join('');
+  }
+
+  // ---------- GOALS ----------
+  function renderGoals(){
+    const wrap = $('#goalHorizons'); wrap.innerHTML='';
+    state.goals.forEach((h, hi)=>{
+      const done = h.items.filter(i=>i.done).length;
+      const pct = h.items.length? Math.round(done/h.items.length*100):0;
+      const box = document.createElement('div'); box.className='card horizon';
+      box.innerHTML = `<div class="horizon-head"><span class="h-title">${h.title}</span><span class="h-sub">${pct}% · ${h.sub}</span></div>`;
+      h.items.forEach((it, ii)=>{
+        const row = document.createElement('div'); row.className='goal-row';
+        row.innerHTML = `<span class="check ${it.done?'done':''}">✓</span><span class="label ${it.done?'done':''}">${it.t}</span>`;
+        row.addEventListener('click', ()=>{
+          state.goals[hi].items[ii].done = !state.goals[hi].items[ii].done;
+          save(); renderGoals(); renderDashboard();
+        });
+        box.appendChild(row);
+      });
+      wrap.appendChild(box);
+    });
+  }
+
+  function goalsOverallPct(){
+    let total=0, done=0;
+    state.goals.forEach(h=> h.items.forEach(i=>{ total++; if(i.done) done++; }));
+    return total? Math.round(done/total*100):0;
+  }
+
+  // ---------- FINANCE ----------
+  let finType = 'in';
+  $('#finSeg').addEventListener('click', (e)=>{
+    const b = e.target.closest('button'); if(!b) return;
+    $$('#finSeg button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); finType = b.dataset.t;
+  });
+
+  function monthsBetween(fromYM, toYM){
+    // fromYM/toYM = 'YYYY-MM'
+    if(!fromYM || !toYM) return 0;
+    const [fy,fm] = fromYM.split('-').map(Number);
+    const [ty,tm] = toYM.split('-').map(Number);
+    return (ty-fy)*12 + (tm-fm);
+  }
+
+  $('#landSaveBtn').addEventListener('click', ()=>{
+    state.finance.landPlan = {
+      price: parseFloat($('#landPrice').value)||0,
+      down: parseFloat($('#landDown').value)||0,
+      downMonth: $('#landDownMonth').value||'',
+      startMonth: $('#landStartMonth').value||'',
+      months: parseInt($('#landMonths').value)||0
+    };
+    save(); toast('บันทึกแผนผ่อนแล้ว'); renderFinance(); renderDashboard();
+  });
+
+  $('#landPayBtn').addEventListener('click', ()=>{
+    const lp = state.finance.landPlan;
+    if(!lp || !lp.price){ toast('บันทึกแผนผ่อนก่อนนะ'); return; }
+    const monthly = lp.months? (lp.price-lp.down)/lp.months : 0;
+    state.finance.txns.push({date:todayStr(), type:'land', desc:'ผ่อนที่ดิน', amt:Math.round(monthly)});
+    save(); toast('บันทึกงวดนี้แล้ว'); renderFinance(); renderDashboard();
+  });
+
+  $('#finAddBtn').addEventListener('click', ()=>{
+    const desc = $('#finDesc').value.trim();
+    const amt = parseFloat($('#finAmt').value)||0;
+    if(!desc || !amt){ toast('กรอกรายการและจำนวนเงินก่อนนะ'); return; }
+    state.finance.txns.push({date:todayStr(), type:finType, desc, amt});
+    save();
+    $('#finDesc').value=''; $('#finAmt').value='';
+    toast('เพิ่มรายการแล้ว');
+    renderFinance(); renderDashboard();
+  });
+
+  function renderFinance(){
+    const lp = state.finance.landPlan || {};
+    $('#landPrice').value = lp.price||'';
+    $('#landDown').value = lp.down||'';
+    $('#landDownMonth').value = lp.downMonth||'';
+    $('#landStartMonth').value = lp.startMonth||'';
+    $('#landMonths').value = lp.months||'';
+
+    const summaryEl = $('#landSummary'); const barEl = $('#landBar');
+    if(lp.price && lp.months){
+      const monthly = (lp.price-lp.down)/lp.months;
+      const paidLand = state.finance.txns.filter(t=>t.type==='land').reduce((a,t)=>a+t.amt,0);
+      const totalPaid = (lp.down||0) + paidLand;
+      const pct = Math.min(100, (totalPaid/lp.price)*100);
+      const nowYM = monthStr();
+      const elapsed = lp.startMonth? Math.max(0, monthsBetween(lp.startMonth, nowYM)+1) : 0;
+      const expectedInstallments = Math.min(lp.months, elapsed);
+      const paidInstallments = Math.round(paidLand/(monthly||1));
+      summaryEl.innerHTML = `ผ่อนเดือนละ <b>${monthly.toLocaleString(undefined,{maximumFractionDigits:0})}</b> บาท (${lp.months} งวด)<br>`+
+        `จ่ายแล้ว ${totalPaid.toLocaleString()} / ${lp.price.toLocaleString()} บาท (${pct.toFixed(1)}%)<br>`+
+        (lp.startMonth? `งวดที่จ่ายแล้ว ${paidInstallments} · ควรจ่ายแล้ว ${expectedInstallments} งวด ณ ตอนนี้` : '');
+      barEl.style.width = pct+'%';
+    } else {
+      summaryEl.innerHTML = 'กรอกแผนผ่อนแล้วกดบันทึกเพื่อดูสรุป';
+      barEl.style.width = '0%';
+    }
+
+    const m = monthStr();
+    const monthTxns = state.finance.txns.filter(t=>t.date.startsWith(m));
+    const inSum = monthTxns.filter(t=>t.type==='in').reduce((a,t)=>a+t.amt,0);
+    const outSum = monthTxns.filter(t=>t.type==='out'||t.type==='land').reduce((a,t)=>a+t.amt,0);
+    $('#finMonthIn').textContent = inSum.toLocaleString();
+    $('#finMonthOut').textContent = outSum.toLocaleString();
+
+    const logEl = $('#finLog');
+    const recent = [...state.finance.txns].reverse().slice(0,20);
+    if(recent.length===0){ logEl.innerHTML = '<div class="empty">ยังไม่มีรายการ</div>'; }
+    else{
+      logEl.innerHTML = recent.map(t=>{
+        const sign = (t.type==='out'||t.type==='land')? '-' : '+';
+        const cls = (t.type==='out'||t.type==='land')? 'out':'in';
+        return `<div class="log-row"><span>${thaiDate(t.date)} — ${t.desc}</span><span class="amt ${cls}">${sign}${t.amt.toLocaleString()}</span></div>`;
+      }).join('');
+    }
+    renderFinChart();
+    renderReminder();
+  }
+
+  // ---------- DASHBOARD ----------
+  function healthWeekPct(){
+    let total=0, done=0;
+    for(let i=0;i<7;i++){
+      const d = new Date(); d.setDate(d.getDate()-i);
+      const ds = d.toISOString().slice(0,10);
+      const entry = state.today[ds];
+      TODAY_ITEMS.health.forEach(it=>{
+        total++;
+        if(entry && entry.health && entry.health[it.id]) done++;
+      });
+    }
+    return total? Math.round(done/total*100):0;
+  }
+
+  function renderDashboard(){
+    $('#dashYear').textContent = new Date().getFullYear();
+    $('#dashEncourage').textContent = QUOTES[(new Date().getDate()+1)%QUOTES.length];
+    const cnDates = Object.keys(state.chinese.logs);
+    $('#dCnDays').textContent = `${cnDates.length}/365`;
+    const totalMin = cnDates.reduce((a,d)=>a+(state.chinese.logs[d].minutes||0),0);
+    $('#dCnHours').textContent = (totalMin/60).toFixed(1)+' ชม.';
+    const lp = state.finance.landPlan || {};
+    let finPct = 0;
+    if(lp.price){
+      const paidLand = state.finance.txns.filter(t=>t.type==='land').reduce((a,t)=>a+t.amt,0);
+      finPct = Math.min(100, Math.round(((lp.down||0)+paidLand)/lp.price*100));
+    }
+    $('#dSaving').textContent = finPct+'%';
+    $('#dHealth').textContent = healthWeekPct()+'%';
+    $('#dGoals').textContent = goalsOverallPct()+'%';
+    $('#dStreak').textContent = chineseStreak();
+
+    renderReview($('#reviewSeg .on')?.dataset.r || 'week');
+  }
+
+  $('#reviewSeg').addEventListener('click', (e)=>{
+    const b = e.target.closest('button'); if(!b) return;
+    $$('#reviewSeg button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    renderReview(b.dataset.r);
+  });
+
+  function renderReview(range){
+    const days = range==='week'? 7 : 30;
+    let cnDaysCount=0, cnMinutes=0, workDays=0, otDays=0;
+    for(let i=0;i<days;i++){
+      const d = new Date(); d.setDate(d.getDate()-i);
+      const ds = d.toISOString().slice(0,10);
+      if(state.chinese.logs[ds]){ cnDaysCount++; cnMinutes += state.chinese.logs[ds].minutes||0; }
+      const entry = state.today[ds];
+      if(entry){
+        if(entry.work && entry.work.work) workDays++;
+        if(entry.work && entry.work.ot) otDays++;
+      }
+    }
+    const m = monthStr();
+    const monthTxns = state.finance.txns.filter(t=>t.date.startsWith(m));
+    const inSum = monthTxns.filter(t=>t.type==='in').reduce((a,t)=>a+t.amt,0);
+    const outSum = monthTxns.filter(t=>t.type==='out').reduce((a,t)=>a+t.amt,0);
+
+    $('#reviewBody').innerHTML = `
+      🇨🇳 เรียนจีน ${cnDaysCount} วัน (${(cnMinutes/60).toFixed(1)} ชม.)<br>
+      💼 ทำงาน ${workDays} วัน · OT ${otDays} วัน<br>
+      💰 รายรับเดือนนี้ ${inSum.toLocaleString()} · รายจ่าย ${outSum.toLocaleString()} บาท<br>
+      🧘 ดูแลตัวเอง ${healthWeekPct()}% (7 วันล่าสุด)
+    `;
+  }
+
+  // ---------- JOURNAL ----------
+  $('#jSaveBtn').addEventListener('click', ()=>{
+    const d = todayStr();
+    const entry = {
+      what: $('#jWhat').value, proud: $('#jProud').value, learn: $('#jLearn').value,
+      family: $('#jFamily').value, improve: $('#jImprove').value
+    };
+    const hasContent = Object.values(entry).some(v=>v.trim());
+    if(!hasContent){ toast('เขียนอะไรสักอย่างก่อนนะ'); return; }
+    state.journal.entries[d] = entry;
+    save();
+    toast('บันทึกวันนี้แล้ว ❤️');
+    renderJournal();
+  });
+
+  function renderJournal(){
+    const d = todayStr();
+    const existing = state.journal.entries[d];
+    if(existing){
+      $('#jWhat').value = existing.what||''; $('#jProud').value = existing.proud||'';
+      $('#jLearn').value = existing.learn||''; $('#jFamily').value = existing.family||'';
+      $('#jImprove').value = existing.improve||'';
+    }
+    const dates = Object.keys(state.journal.entries).sort().reverse();
+    const listEl = $('#jList');
+    if(dates.length===0){ listEl.innerHTML='<div class="empty">ยังไม่มีบันทึก เริ่มเขียนบรรทัดแรกได้เลย</div>'; return; }
+    listEl.innerHTML = dates.slice(0,30).map(ds=>{
+      const e = state.journal.entries[ds];
+      const parts = [];
+      if(e.what) parts.push('📝 '+e.what);
+      if(e.proud) parts.push('🏅 ภูมิใจ: '+e.proud);
+      if(e.learn) parts.push('📖 เรียนรู้: '+e.learn);
+      if(e.family) parts.push('👨‍👩‍👧 ครอบครัว: '+e.family);
+      if(e.improve) parts.push('🔧 ปรับปรุง: '+e.improve);
+      return `<div class="jentry"><div class="jdate">${thaiDate(ds)}</div><div class="jtext">${parts.join('\n')}</div></div>`;
+    }).join('');
+  }
+
+  // ---------- CAREER ----------
+  let carResume = false;
+  $('#carResumeCheck').addEventListener('click', ()=>{
+    carResume = !carResume;
+    $('#carResumeCheck').classList.toggle('done', carResume);
+  });
+  $('#carSaveBtn').addEventListener('click', ()=>{
+    const task = $('#carTask').value.trim();
+    const learn = $('#carLearn').value.trim();
+    const problem = $('#carProblem').value.trim();
+    const skill = $('#carSkill').value.trim();
+    if(!task && !learn && !problem && !skill){ toast('เขียนอะไรสักอย่างก่อนนะ'); return; }
+    state.career.entries.push({date:todayStr(), task, learn, problem, skill, resume:carResume});
+    save();
+    $('#carTask').value=''; $('#carLearn').value=''; $('#carProblem').value=''; $('#carSkill').value='';
+    carResume=false; $('#carResumeCheck').classList.remove('done');
+    toast('บันทึกผลงานแล้ว 💼');
+    renderCareer();
+  });
+
+  function renderCareer(){
+    const entries = state.career.entries;
+    $('#careerCount').textContent = `${entries.length} บันทึก`;
+    const resumeEl = $('#carResumeLog');
+    const resumeItems = entries.filter(e=>e.resume).slice().reverse();
+    resumeEl.innerHTML = resumeItems.length? resumeItems.map(e=>
+      `<div class="log-row"><span>${thaiDate(e.date)} — ${e.task||e.skill||'—'}</span></div>`
+    ).join('') : '<div class="empty">ยังไม่มีรายการ</div>';
+
+    const logEl = $('#carLog');
+    const recent = entries.slice().reverse().slice(0,20);
+    logEl.innerHTML = recent.length? recent.map(e=>{
+      const parts=[];
+      if(e.task) parts.push('📌 '+e.task);
+      if(e.learn) parts.push('📖 '+e.learn);
+      if(e.problem) parts.push('🧩 '+e.problem);
+      if(e.skill) parts.push('🛠 '+e.skill);
+      return `<div class="jentry"><div class="jdate">${thaiDate(e.date)}${e.resume?' · ⭐ Resume':''}</div><div class="jtext">${parts.join('\n')}</div></div>`;
+    }).join('') : '<div class="empty">ยังไม่มีบันทึก</div>';
+  }
+
+  // ---------- REMINDER (Today) ----------
+  function renderReminder(){
+    const slot = $('#reminderSlot'); slot.innerHTML='';
+    const lp = state.finance.landPlan;
+    if(!lp || !lp.price || !lp.startMonth) return;
+    const nowYM = monthStr();
+    const started = monthsBetween(lp.startMonth, nowYM) >= 0;
+    if(!started) return;
+    const paidThisMonth = state.finance.txns.some(t=> t.type==='land' && t.date.startsWith(nowYM));
+    if(!paidThisMonth){
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.background = 'var(--ochre)'; card.style.color = '#fff'; card.style.border='none';
+      card.innerHTML = `<h3 style="color:#fff;">🏡 เดือนนี้ยังไม่ได้บันทึกค่างวดที่ดิน</h3><p style="font-size:12.5px; margin:0 0 10px; opacity:.95;">อย่าลืมกดบันทึกในหน้าการเงินเมื่อจ่ายแล้ว</p>`;
+      const btn = document.createElement('button'); btn.className='btn small secondary'; btn.textContent='ไปหน้าการเงิน';
+      btn.style.background='#fff'; btn.style.color='var(--ochre)'; btn.style.borderColor='#fff';
+      btn.addEventListener('click', ()=>{ document.querySelector('[data-view="finance"]').click(); });
+      card.appendChild(btn);
+      slot.appendChild(card);
+    }
+  }
+
+  // ---------- FINANCE CHART ----------
+  function renderFinChart(){
+    const svg = $('#finChart');
+    const months = [];
+    for(let i=5;i>=0;i--){
+      const d = new Date(); d.setMonth(d.getMonth()-i);
+      months.push(d.toISOString().slice(0,7));
+    }
+    const data = months.map(m=>{
+      const txns = state.finance.txns.filter(t=>t.date.startsWith(m));
+      const inSum = txns.filter(t=>t.type==='in').reduce((a,t)=>a+t.amt,0);
+      const outSum = txns.filter(t=>t.type==='out'||t.type==='land').reduce((a,t)=>a+t.amt,0);
+      return {m, inSum, outSum};
+    });
+    const maxVal = Math.max(1, ...data.map(d=>Math.max(d.inSum, d.outSum)));
+    const w=300, h=140, padB=18, padT=6, chartH = h-padB-padT;
+    const groupW = w/6, barW = groupW*0.3;
+    let svgHtml = '';
+    data.forEach((d,i)=>{
+      const gx = i*groupW;
+      const inH = (d.inSum/maxVal)*chartH;
+      const outH = (d.outSum/maxVal)*chartH;
+      svgHtml += `<rect x="${gx+groupW*0.15}" y="${padT+chartH-inH}" width="${barW}" height="${inH}" fill="#1F4E79" rx="2"></rect>`;
+      svgHtml += `<rect x="${gx+groupW*0.55}" y="${padT+chartH-outH}" width="${barW}" height="${outH}" fill="#D8483F" rx="2"></rect>`;
+      const label = d.m.slice(5,7)+'/'+d.m.slice(2,4);
+      svgHtml += `<text x="${gx+groupW/2}" y="${h-4}" font-size="7" fill="#5A6B7E" text-anchor="middle">${label}</text>`;
+    });
+    svg.innerHTML = svgHtml;
+  }
+
+  function renderAll(){
+    renderHero(); renderToday(); renderChinese(); renderEnglish(); renderGoals(); renderFinance(); renderDashboard(); renderJournal(); renderCareer(); renderReminder(); renderFinChart();
+  }
+
+  load().then(()=>{
+    renderAll();
+    if(!state.settings.name){
+      setTimeout(openSettings, 400);
+    }
+  });
+})();
+</script>
+</body>
+</html>
