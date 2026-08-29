@@ -1,0 +1,144 @@
+/**
+ * My Life Tracker — Google Sheets backend
+ * วางโค้ดนี้ใน Extensions > Apps Script ของ Google Sheet ที่สร้างขึ้นมาใหม่
+ * แล้ว Deploy > New deployment > Web app (ดูขั้นตอนละเอียดใน README)
+ */
+
+var HEADERS = {
+  'ChineseLog': ['date','lessonId','lessonNote','minutes','vocab','sentence','level','reviewed','minimal'],
+  'EnglishLog': ['date','day','minutes','note','minimal'],
+  'FinanceTxns': ['date','type','desc','amt'],
+  'JournalLog': ['date','what','proud','learn','family','improve'],
+  'CareerLog': ['date','task','learn','problem','skill','resume'],
+  'State': ['key','value']
+};
+
+function getSheet(name){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(name);
+  if(!sh){
+    sh = ss.insertSheet(name);
+    if(HEADERS[name]) sh.appendRow(HEADERS[name]);
+  }
+  return sh;
+}
+
+function doGet(e){
+  var action = (e && e.parameter && e.parameter.action) || 'all';
+  if(action === 'all') return respond(getAllData());
+  return respond({error:'unknown action'});
+}
+
+function doPost(e){
+  try{
+    var body = JSON.parse(e.postData.contents);
+    var action = body.action;
+    var p = body.payload || {};
+    if(action === 'appendChinese'){
+      appendRow('ChineseLog', [p.date,p.lessonId,p.lessonNote,p.minutes,p.vocab,p.sentence,p.level,p.reviewed,p.minimal]);
+    } else if(action === 'appendEnglish'){
+      appendRow('EnglishLog', [p.date,p.day,p.minutes,p.note,p.minimal]);
+    } else if(action === 'appendFinance'){
+      appendRow('FinanceTxns', [p.date,p.type,p.desc,p.amt]);
+    } else if(action === 'appendJournal'){
+      appendRow('JournalLog', [p.date,p.what,p.proud,p.learn,p.family,p.improve]);
+    } else if(action === 'appendCareer'){
+      appendRow('CareerLog', [p.date,p.task,p.learn,p.problem,p.skill,p.resume]);
+    } else if(action === 'setState'){
+      setStateValue(p.key, p.value);
+    } else if(action === 'setTodayItem'){
+      setTodayItem(p.date, p.group, p.itemId, p.value);
+    } else {
+      return respond({error:'unknown action: '+action});
+    }
+    return respond({ok:true});
+  }catch(err){
+    return respond({error: String(err)});
+  }
+}
+
+function appendRow(sheetName, row){
+  getSheet(sheetName).appendRow(row);
+}
+
+function setStateValue(key, value){
+  var sh = getSheet('State');
+  var data = sh.getDataRange().getValues();
+  for(var i=1;i<data.length;i++){
+    if(data[i][0] === key){ sh.getRange(i+1,2).setValue(JSON.stringify(value)); return; }
+  }
+  sh.appendRow([key, JSON.stringify(value)]);
+}
+
+function getStateValue(key, defVal){
+  var sh = getSheet('State');
+  var data = sh.getDataRange().getValues();
+  for(var i=1;i<data.length;i++){
+    if(data[i][0] === key){
+      try{ return JSON.parse(data[i][1]); }catch(e){ return defVal; }
+    }
+  }
+  return defVal;
+}
+
+function setTodayItem(date, group, itemId, value){
+  var today = getStateValue('today', {});
+  if(!today[date]) today[date] = {work:{},dev:{},health:{},life:{}};
+  if(!today[date][group]) today[date][group] = {};
+  today[date][group][itemId] = value;
+  setStateValue('today', today);
+}
+
+function formatDate(val){
+  if(Object.prototype.toString.call(val) === '[object Date]'){
+    return Utilities.formatDate(val, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  }
+  return String(val);
+}
+
+function rowsToDateMap(values, cols){
+  var result = {};
+  for(var i=1;i<values.length;i++){
+    var row = values[i];
+    if(!row[0]) continue;
+    var dateKey = formatDate(row[0]);
+    var obj = {};
+    for(var c=1;c<cols.length;c++){ obj[cols[c]] = row[c]; }
+    result[dateKey] = obj;
+  }
+  return result;
+}
+
+function rowsToArray(values, cols){
+  var result = [];
+  for(var i=1;i<values.length;i++){
+    var row = values[i];
+    if(!row[0]) continue;
+    var obj = {};
+    for(var c=0;c<cols.length;c++){
+      obj[cols[c]] = (cols[c]==='date') ? formatDate(row[c]) : row[c];
+    }
+    result.push(obj);
+  }
+  return result;
+}
+
+function getAllData(){
+  return {
+    chinese: { logs: rowsToDateMap(getSheet('ChineseLog').getDataRange().getValues(), HEADERS.ChineseLog) },
+    english: { logs: rowsToDateMap(getSheet('EnglishLog').getDataRange().getValues(), HEADERS.EnglishLog) },
+    finance: {
+      txns: rowsToArray(getSheet('FinanceTxns').getDataRange().getValues(), HEADERS.FinanceTxns),
+      landPlan: getStateValue('landPlan', null)
+    },
+    journal: { entries: rowsToDateMap(getSheet('JournalLog').getDataRange().getValues(), HEADERS.JournalLog) },
+    career: { entries: rowsToArray(getSheet('CareerLog').getDataRange().getValues(), HEADERS.CareerLog) },
+    today: getStateValue('today', {}),
+    goals: getStateValue('goals', null),
+    settings: getStateValue('settings', null)
+  };
+}
+
+function respond(obj){
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
